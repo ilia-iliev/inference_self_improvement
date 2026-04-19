@@ -19,28 +19,3 @@ services:
     stdin_open: true
     tty: true
     working_dir: /workspace
-
-  # One-shot: generate synthetic multimodal assets + prompt sets
-  generate-data:
-    extends: challenge
-    command: python3 /data/generate_prompts.py
-
-  # One-shot: generate HF greedy reference outputs for dev + eval sets
-  generate-references:
-    extends: challenge
-    command: python3 /baseline/generate_reference.py
-
-  # One-shot: run vLLM baseline, record timing
-  run-baseline:
-    extends: challenge
-    command: python3 /baseline/run_vllm_baseline.py
-
-  # One-shot: run the agent's solution
-  run-solution:
-    extends: challenge
-    command: python3 /solution/run.py /judge/eval_prompts.jsonl
-
-  # One-shot: judge the agent's solution
-  judge:
-    extends: challenge
-    command: python3 /judge/judge.py
