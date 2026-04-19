@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.claude/
+*.log
+
+# Generated synthetic assets (regenerable via generate_prompts.py with seed=42)
+data/assets/
+
+# Pipeline artifacts (regenerable)
+data/*_reference.jsonl
+judge/baseline_outputs.jsonl
+judge/baseline_timing.json
+judge/eval_prompts.jsonl
+judge/score.json
+solution/outputs.jsonl
+solution/timing.json
