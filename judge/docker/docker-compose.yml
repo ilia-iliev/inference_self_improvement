@@ -1,0 +1,27 @@
+services:
+  challenge:
+    image: gemma4-challenge:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - MODEL_PATH=${MODEL_PATH:?set MODEL_PATH to the HF repo id or local path (see .env.example)}
+      - TEXT_ONLY=${TEXT_ONLY:-1}
+      - HF_HUB_OFFLINE=1
+    volumes:
+      - ${HF_CACHE_DIR:?set HF_CACHE_DIR to your local Hugging Face cache (see .env.example)}:/root/.cache/huggingface:ro
+      - ../../data:/data
+      - ../../solution:/solution
+      - ../../judge:/judge
+    shm_size: "16g"
+    ipc: host
+    stdin_open: true
+    tty: true
+    working_dir: /workspace

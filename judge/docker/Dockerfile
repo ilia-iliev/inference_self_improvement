@@ -31,12 +31,13 @@ RUN pip install --no-cache-dir vllm
 # Evaluation helpers
 RUN pip install --no-cache-dir tqdm jsonlines
 
+# Server deps for baseline/solution
+RUN pip install --no-cache-dir fastapi "uvicorn[standard]"
+
 # Workspace
 WORKDIR /workspace
 
 # Volumes mounted at runtime:
-#   /models   — Gemma 4 2B weights
-#   /data     — prompt data & assets
+#   /data     — prompt data & assets (agent + judge subtrees)
 #   /solution — agent solution
-#   /judge    — judge scripts & eval data
-#   /baseline — baseline scripts
+#   /judge    — judge scripts + baseline

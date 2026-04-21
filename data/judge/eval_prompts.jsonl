@@ -1,0 +1,100 @@
+{"id": "eval_000", "modality": "text", "prompt": "Give me a one-paragraph story about a librarian who discovers a secret room."}
+{"id": "eval_001", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe Amazon rainforest, often referred to as the lungs of the Earth, spans over 5.5 million square kilometers across nine countries in South America. It is home to approximately 10% of all species on Earth, including over 40,000 plant species, 1,300 bird species, and more than 3,000 types of fish. Deforestation remains a critical threat, with an estimated 17% of the forest lost in the last 50 years."}
+{"id": "eval_002", "modality": "text", "prompt": "Write a short bash script that monitors disk usage and alerts if any partition exceeds 90%."}
+{"id": "eval_003", "modality": "text", "prompt": "Write a Python function that converts a Roman numeral string to an integer."}
+{"id": "eval_004", "modality": "text", "prompt": "If every student passed the exam and Alice is a student, what can we conclude about Alice's exam result?"}
+{"id": "eval_005", "modality": "text", "prompt": "What is the capital of Egypt?"}
+{"id": "eval_006", "modality": "text", "prompt": "Write a Python function that checks if a string is a valid palindrome ignoring spaces and punctuation."}
+{"id": "eval_007", "modality": "text", "prompt": "If every student passed the exam and Alice is a student, what can we conclude about Alice's exam result?"}
+{"id": "eval_008", "modality": "text", "prompt": "Write a Python function that converts a Roman numeral string to an integer."}
+{"id": "eval_009", "modality": "text", "prompt": "Who invented the compass and when?"}
+{"id": "eval_010", "modality": "text", "prompt": "Explain the concept of photosynthesis in simple terms."}
+{"id": "eval_011", "modality": "text", "prompt": "What are the main differences between TCP and UDP?"}
+{"id": "eval_012", "modality": "text", "prompt": "Who invented the internet and when?"}
+{"id": "eval_013", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "eval_014", "modality": "text", "prompt": "Solve step by step: What is 17 * 23 + 45?"}
+{"id": "eval_015", "modality": "text", "prompt": "Solve step by step: What is 2^10?"}
+{"id": "eval_016", "modality": "text", "prompt": "Give me a one-paragraph story about a dog who solves mysteries."}
+{"id": "eval_017", "modality": "text", "prompt": "Write a haiku about an empty parking lot."}
+{"id": "eval_018", "modality": "text", "prompt": "Explain the concept of neural networks in simple terms."}
+{"id": "eval_019", "modality": "text", "prompt": "Solve step by step: A rectangle has a perimeter of 30 cm and a width of 7 cm. What is its area?"}
+{"id": "eval_020", "modality": "text", "prompt": "What are the main differences between REST APIs and GraphQL?"}
+{"id": "eval_021", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "eval_022", "modality": "text", "prompt": "Give me a one-paragraph story about a dog who solves mysteries."}
+{"id": "eval_023", "modality": "text", "prompt": "What is the capital of New Zealand?"}
+{"id": "eval_024", "modality": "text", "prompt": "Solve step by step: If a train travels 120 km in 1.5 hours, what is its average speed in km/h?"}
+{"id": "eval_025", "modality": "text", "prompt": "Write a haiku about debugging code."}
+{"id": "eval_026", "modality": "text", "prompt": "Give me a one-paragraph story about a librarian who discovers a secret room."}
+{"id": "eval_027", "modality": "text", "prompt": "Who invented the light bulb and when?"}
+{"id": "eval_028", "modality": "text", "prompt": "Write a Python function that flattens a nested list of arbitrary depth."}
+{"id": "eval_029", "modality": "text", "prompt": "What are the main differences between TCP and UDP?"}
+{"id": "eval_030", "modality": "text", "prompt": "Explain the concept of supply and demand in simple terms."}
+{"id": "eval_031", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe Amazon rainforest, often referred to as the lungs of the Earth, spans over 5.5 million square kilometers across nine countries in South America. It is home to approximately 10% of all species on Earth, including over 40,000 plant species, 1,300 bird species, and more than 3,000 types of fish. Deforestation remains a critical threat, with an estimated 17% of the forest lost in the last 50 years."}
+{"id": "eval_032", "modality": "text", "prompt": "Write a short bash script that renames all .txt files to .md in the current directory."}
+{"id": "eval_033", "modality": "text", "prompt": "Give me a one-paragraph story about a baker whose bread grants wishes."}
+{"id": "eval_034", "modality": "text", "prompt": "Write a Python function that reverses a linked list in place."}
+{"id": "eval_035", "modality": "text", "prompt": "Explain the concept of the greenhouse effect in simple terms."}
+{"id": "eval_036", "modality": "text", "prompt": "Write a haiku about a thunderstorm."}
+{"id": "eval_037", "modality": "text", "prompt": "Solve step by step: If 3x + 7 = 22, what is x?"}
+{"id": "eval_038", "modality": "text", "prompt": "Solve step by step: If 3x + 7 = 22, what is x?"}
+{"id": "eval_039", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nArtificial intelligence has rapidly evolved from rule-based expert systems to deep learning models capable of generating text, images, and code. Large language models trained on vast datasets can perform a wide range of tasks including translation, summarization, and reasoning. Concerns about AI safety, bias, and alignment remain active areas of research and public debate."}
+{"id": "eval_040", "modality": "text", "prompt": "What are the main differences between supervised learning and unsupervised learning?"}
+{"id": "eval_041", "modality": "text", "prompt": "List three advantages of renewable energy."}
+{"id": "eval_042", "modality": "text", "prompt": "Who invented the transistor and when?"}
+{"id": "eval_043", "modality": "text", "prompt": "List three advantages of early education."}
+{"id": "eval_044", "modality": "text", "prompt": "Write a Python function that finds the greatest common divisor of two numbers."}
+{"id": "eval_045", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "eval_046", "modality": "text", "prompt": "What is the capital of Poland?"}
+{"id": "eval_047", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "eval_048", "modality": "text", "prompt": "Who invented the transistor and when?"}
+{"id": "eval_049", "modality": "text", "prompt": "Write a Python function that checks if a string is a valid palindrome ignoring spaces and punctuation."}
+{"id": "eval_050", "modality": "text", "prompt": "Explain the concept of the greenhouse effect in simple terms."}
+{"id": "eval_051", "modality": "text", "prompt": "Solve step by step: If 3x + 7 = 22, what is x?"}
+{"id": "eval_052", "modality": "text", "prompt": "Write a Python function that reverses a linked list in place."}
+{"id": "eval_053", "modality": "text", "prompt": "Write a Python function that reverses a linked list in place."}
+{"id": "eval_054", "modality": "text", "prompt": "Who invented dynamite and when?"}
+{"id": "eval_055", "modality": "text", "prompt": "Solve step by step: How many ways can you choose 3 items from a set of 8?"}
+{"id": "eval_056", "modality": "text", "prompt": "List three advantages of electric vehicles."}
+{"id": "eval_057", "modality": "text", "prompt": "Who invented the airplane and when?"}
+{"id": "eval_058", "modality": "text", "prompt": "Who invented the light bulb and when?"}
+{"id": "eval_059", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nQuantum computing leverages quantum mechanical phenomena such as superposition and entanglement to perform computations that would be infeasible for classical computers. While still in early stages, quantum computers have demonstrated quantum advantage in specific tasks. Major challenges include maintaining qubit coherence and scaling up the number of qubits while minimizing error rates."}
+{"id": "eval_060", "modality": "text", "prompt": "What is the capital of Norway?"}
+{"id": "eval_061", "modality": "text", "prompt": "Write a haiku about the ocean at night."}
+{"id": "eval_062", "modality": "text", "prompt": "Write a haiku about an empty parking lot."}
+{"id": "eval_063", "modality": "text", "prompt": "Write a short bash script that prints the top 10 most common words in a file."}
+{"id": "eval_064", "modality": "text", "prompt": "Give me a one-paragraph story about a baker whose bread grants wishes."}
+{"id": "eval_065", "modality": "text", "prompt": "Solve step by step: If 3x + 7 = 22, what is x?"}
+{"id": "eval_066", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "eval_067", "modality": "text", "prompt": "Give me a one-paragraph story about a librarian who discovers a secret room."}
+{"id": "eval_068", "modality": "text", "prompt": "What is the capital of Portugal?"}
+{"id": "eval_069", "modality": "text", "prompt": "Write a haiku about debugging code."}
+{"id": "eval_070", "modality": "text", "prompt": "Write a haiku about a cup of coffee."}
+{"id": "eval_071", "modality": "text", "prompt": "List three advantages of vertical farming."}
+{"id": "eval_072", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "eval_073", "modality": "text", "prompt": "Write a short bash script that prints the top 10 most common words in a file."}
+{"id": "eval_074", "modality": "text", "prompt": "Explain the concept of blockchain in simple terms."}
+{"id": "eval_075", "modality": "text", "prompt": "Give me a one-paragraph story about a time traveler stuck in a loop."}
+{"id": "eval_076", "modality": "text", "prompt": "Explain the concept of neural networks in simple terms."}
+{"id": "eval_077", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe Great Barrier Reef is the world's largest coral reef system, stretching over 2,300 kilometers along the northeast coast of Australia. It supports an extraordinary diversity of marine life and generates significant economic value through tourism and fishing. However, rising ocean temperatures have caused mass coral bleaching events, threatening the long-term health of this ecosystem."}
+{"id": "eval_078", "modality": "text", "prompt": "Write a Python function that flattens a nested list of arbitrary depth."}
+{"id": "eval_079", "modality": "text", "prompt": "List three advantages of electric vehicles."}
+{"id": "eval_080", "modality": "text", "prompt": "What are the main differences between SQL and NoSQL?"}
+{"id": "eval_081", "modality": "text", "prompt": "Write a Python function that finds the greatest common divisor of two numbers."}
+{"id": "eval_082", "modality": "text", "prompt": "Who invented dynamite and when?"}
+{"id": "eval_083", "modality": "text", "prompt": "What are the main differences between Linux and Windows?"}
+{"id": "eval_084", "modality": "text", "prompt": "What are the main differences between HTTP and HTTPS?"}
+{"id": "eval_085", "modality": "text", "prompt": "Give me a one-paragraph story about the last tree on Earth."}
+{"id": "eval_086", "modality": "text", "prompt": "Write a short bash script that prints the top 10 most common words in a file."}
+{"id": "eval_087", "modality": "text", "prompt": "What are the main differences between Linux and Windows?"}
+{"id": "eval_088", "modality": "text", "prompt": "Explain the concept of quantum entanglement in simple terms."}
+{"id": "eval_089", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nQuantum computing leverages quantum mechanical phenomena such as superposition and entanglement to perform computations that would be infeasible for classical computers. While still in early stages, quantum computers have demonstrated quantum advantage in specific tasks. Major challenges include maintaining qubit coherence and scaling up the number of qubits while minimizing error rates."}
+{"id": "eval_090", "modality": "text", "prompt": "Write a Python function that merges two sorted lists into one sorted list."}
+{"id": "eval_091", "modality": "text", "prompt": "Who invented the light bulb and when?"}
+{"id": "eval_092", "modality": "text", "prompt": "Give me a one-paragraph story about an astronaut who hears music in space."}
+{"id": "eval_093", "modality": "text", "prompt": "Solve step by step: What is 2^10?"}
+{"id": "eval_094", "modality": "text", "prompt": "If every student passed the exam and Alice is a student, what can we conclude about Alice's exam result?"}
+{"id": "eval_095", "modality": "text", "prompt": "Explain the concept of photosynthesis in simple terms."}
+{"id": "eval_096", "modality": "text", "prompt": "Write a short bash script that prints the top 10 most common words in a file."}
+{"id": "eval_097", "modality": "text", "prompt": "Who invented the light bulb and when?"}
+{"id": "eval_098", "modality": "text", "prompt": "List three advantages of preventive medicine."}
+{"id": "eval_099", "modality": "text", "prompt": "Write a haiku about fresh snow."}

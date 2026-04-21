@@ -2,15 +2,15 @@ __pycache__/
 *.pyc
 .claude/
 *.log
+judge/docker/.env
 
 # Generated synthetic assets (regenerable via generate_prompts.py with seed=42)
-data/assets/
+data/agent/assets/
+data/judge/assets/
 
 # Pipeline artifacts (regenerable)
-data/*_reference.jsonl
-judge/baseline_outputs.jsonl
-judge/baseline_timing.json
-judge/eval_prompts.jsonl
-judge/score.json
+data/agent/dev_reference.jsonl
+data/judge/eval_reference.jsonl
+solution/last_result.json
 solution/outputs.jsonl
 solution/timing.json

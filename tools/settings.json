@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/ilia/repositories/preference_challenge/**)",
+      "Glob(//home/ilia/repositories/preference_challenge/**)",
+      "Grep(//home/ilia/repositories/preference_challenge/**)",
+      "Edit(//home/ilia/repositories/preference_challenge/solution/**)",
+      "Write(//home/ilia/repositories/preference_challenge/solution/**)",
+      "Bash(uv run:*)",
+      "Bash(uv pip:*)",
+      "Bash(uv add:*)",
+      "Bash(python3:*)",
+      "Bash(nvidia-smi:*)",
+      "Bash(docker build:*)",
+      "Bash(./run_challenge.sh:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [
+      "Read(//home/ilia/repositories/preference_challenge/data/judge/**)",
+      "Edit(//home/ilia/repositories/preference_challenge/data/judge/**)",
+      "Write(//home/ilia/repositories/preference_challenge/data/judge/**)",
+      "Edit(//home/ilia/repositories/preference_challenge/judge/**)",
+      "Write(//home/ilia/repositories/preference_challenge/judge/**)",
+      "Bash(docker run:*)",
+      "Bash(docker exec:*)",
+      "Bash(sudo:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}

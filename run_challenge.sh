@@ -1,26 +1,59 @@
 #!/usr/bin/env bash
-# Gemma 4 2B Inference Throughput Challenge — orchestration.
+# Inference throughput challenge — orchestration.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMPOSE="$SCRIPT_DIR/docker/docker-compose.yml"
+COMPOSE_FILE="$SCRIPT_DIR/judge/docker/docker-compose.yml"
+ENV_FILE="$SCRIPT_DIR/judge/docker/.env"
 
-dc()  { docker compose -f "$COMPOSE" "$@"; }
-run() { dc run --rm challenge "$@"; }
-copy_eval() { cp "$SCRIPT_DIR/data/eval_prompts.jsonl" "$SCRIPT_DIR/judge/eval_prompts.jsonl"; }
+# shellcheck source=judge/docker/lib.sh
+. "$SCRIPT_DIR/judge/docker/lib.sh"
 
-case "${1:-full}" in
-    build)     dc build challenge ;;
-    data)      run python3 /data/generate_prompts.py ;;
-    reference) run python3 /baseline/inference.py /data/dev_prompts.jsonl  /data/dev_reference.jsonl
-               run python3 /baseline/inference.py /data/eval_prompts.jsonl /data/eval_reference.jsonl ;;
-    baseline)  copy_eval
-               run python3 /baseline/inference.py /judge/eval_prompts.jsonl /judge/baseline_outputs.jsonl /judge/baseline_timing.json ;;
-    solution)  copy_eval
-               run python3 /solution/run.py /judge/eval_prompts.jsonl ;;
-    judge)     copy_eval
-               run python3 /judge/judge.py ;;
-    shell)     dc run --rm challenge bash ;;
-    full)      for s in build data reference baseline solution judge; do "$0" "$s"; done ;;
-    *)         echo "Usage: $0 {build|data|reference|baseline|solution|judge|shell|full}"; exit 1 ;;
+SUBMIT_PY="$SCRIPT_DIR/judge/submit.py"
+UV_DEPS=(--with httpx --with transformers --with sentencepiece)
+
+usage() {
+    cat >&2 <<'EOF'
+Usage: run_challenge.sh <command>
+
+Setup:
+  preflight       Validate .env + HF cache layout. No docker invoked.
+  build           Build the base challenge image (heavy, one-time).
+  data            Generate synthetic prompts + assets, then HF greedy references
+                  for dev + eval sets.
+
+Online loop:
+  submit          Build /solution/, evaluate on all prompts, score, promote if >= 1.05x.
+                  Auto-initializes baseline on first run (delete judge/baseline.json to force).
+  dev [N]         Build /solution/, run on first N dev prompts (default 10),
+                  verify tokens. Fast iteration; no baseline compare.
+
+Misc:
+  shell           Interactive bash shell in the base image.
+EOF
+}
+
+dc()  {
+    detect_compose
+    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" "$@"
+}
+run() {
+    preflight "$ENV_FILE"
+    dc run --rm challenge "$@"
+}
+
+case "${1:-}" in
+    "")             usage; exit 1 ;;
+    preflight)      preflight "$ENV_FILE" && echo "preflight OK: HF_CACHE_DIR=$HF_CACHE_DIR MODEL_PATH=$MODEL_PATH" ;;
+    build)          preflight "$ENV_FILE"; dc build challenge ;;
+    data)           run python3 /data/generate_prompts.py
+                    run python3 /judge/baseline/inference.py /data/agent/dev_prompts.jsonl  /data/agent/dev_reference.jsonl
+                    run python3 /judge/baseline/inference.py /data/judge/eval_prompts.jsonl /data/judge/eval_reference.jsonl ;;
+    submit)         preflight "$ENV_FILE"
+                    uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" submit ;;
+    dev)            preflight "$ENV_FILE"
+                    shift
+                    uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" dev ${1:+-n "$1"} ;;
+    shell)          preflight "$ENV_FILE"; dc run --rm challenge bash ;;
+    *)              usage; exit 1 ;;
 esac

@@ -4,14 +4,15 @@ Generate synthetic multimodal assets and prompt sets for the Gemma 4 2B
 inference throughput challenge.
 
 Creates:
-  /data/assets/          — synthetic images (.png) and audio (.wav)
-  /data/dev_prompts.jsonl    — 100 dev prompts (text, image, audio mix)
-  /data/eval_prompts.jsonl   — 100 eval prompts (same distribution, different content)
+  /data/agent/assets/          — dev images (.png) and audio (.wav)
+  /data/agent/dev_prompts.jsonl
+  /data/judge/assets/          — eval images (.png) and audio (.wav)
+  /data/judge/eval_prompts.jsonl
 
 Prompt JSONL format:
   {"id": "dev_001", "modality": "text", "prompt": "..."}
-  {"id": "dev_042", "modality": "image", "prompt": "...", "image": "/data/assets/img_042.png"}
-  {"id": "dev_078", "modality": "audio", "prompt": "...", "audio": "/data/assets/aud_078.wav"}
+  {"id": "dev_042", "modality": "image", "prompt": "...", "image": "/data/agent/assets/dev_042.png"}
+  {"id": "eval_078", "modality": "audio", "prompt": "...", "audio": "/data/judge/assets/eval_078.wav"}
 """
 
 import json
@@ -28,15 +29,21 @@ SEED = 42
 NUM_DEV = 100
 NUM_EVAL = 100
 
-ASSETS_DIR = Path("/data/assets")
-DEV_OUT = Path("/data/dev_prompts.jsonl")
-EVAL_OUT = Path("/data/eval_prompts.jsonl")
+DEV_ASSETS_DIR = Path("/data/agent/assets")
+EVAL_ASSETS_DIR = Path("/data/judge/assets")
+DEV_OUT = Path("/data/agent/dev_prompts.jsonl")
+EVAL_OUT = Path("/data/judge/eval_prompts.jsonl")
+
+TEXT_ONLY = os.environ.get("TEXT_ONLY", "1") == "1"
 
 # ---------------------------------------------------------------------------
 # Modality distribution (approximate)
 # ---------------------------------------------------------------------------
-# 60% text-only, 25% image+text, 15% audio+text
-MODALITY_WEIGHTS = {"text": 0.60, "image": 0.25, "audio": 0.15}
+# Multimodal: 60% text, 25% image, 15% audio. Text-only: 100% text.
+MODALITY_WEIGHTS = (
+    {"text": 1.0} if TEXT_ONLY
+    else {"text": 0.60, "image": 0.25, "audio": 0.15}
+)
 
 # ---------------------------------------------------------------------------
 # Text-only prompt templates
@@ -386,21 +393,22 @@ def generate_prompt_set(
 
 
 def main():
-    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    DEV_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    EVAL_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 
     # Separate RNGs for dev vs eval to ensure independence
     dev_rng = random.Random(SEED)
     eval_rng = random.Random(SEED + 1)
 
     print(f"Generating {NUM_DEV} dev prompts...")
-    dev_prompts = generate_prompt_set(NUM_DEV, "dev", dev_rng, ASSETS_DIR)
+    dev_prompts = generate_prompt_set(NUM_DEV, "dev", dev_rng, DEV_ASSETS_DIR)
     with open(DEV_OUT, "w") as f:
         for p in dev_prompts:
             f.write(json.dumps(p) + "\n")
     print(f"  Written to {DEV_OUT}")
 
     print(f"Generating {NUM_EVAL} eval prompts...")
-    eval_prompts = generate_prompt_set(NUM_EVAL, "eval", eval_rng, ASSETS_DIR)
+    eval_prompts = generate_prompt_set(NUM_EVAL, "eval", eval_rng, EVAL_ASSETS_DIR)
     with open(EVAL_OUT, "w") as f:
         for p in eval_prompts:
             f.write(json.dumps(p) + "\n")

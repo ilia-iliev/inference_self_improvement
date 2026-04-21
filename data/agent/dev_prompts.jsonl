@@ -1,0 +1,100 @@
+{"id": "dev_000", "modality": "text", "prompt": "What is the capital of Norway?"}
+{"id": "dev_001", "modality": "text", "prompt": "List three advantages of open source software."}
+{"id": "dev_002", "modality": "text", "prompt": "Write a haiku about fresh snow."}
+{"id": "dev_003", "modality": "text", "prompt": "Write a Python function that computes the nth Fibonacci number using memoization."}
+{"id": "dev_004", "modality": "text", "prompt": "List three advantages of electric vehicles."}
+{"id": "dev_005", "modality": "text", "prompt": "What is the capital of Poland?"}
+{"id": "dev_006", "modality": "text", "prompt": "Write a haiku about fresh snow."}
+{"id": "dev_007", "modality": "text", "prompt": "Write a short bash script that monitors disk usage and alerts if any partition exceeds 90%."}
+{"id": "dev_008", "modality": "text", "prompt": "What is the capital of Peru?"}
+{"id": "dev_009", "modality": "text", "prompt": "Give me a one-paragraph story about an astronaut who hears music in space."}
+{"id": "dev_010", "modality": "text", "prompt": "What are the main differences between HTTP and HTTPS?"}
+{"id": "dev_011", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe Amazon rainforest, often referred to as the lungs of the Earth, spans over 5.5 million square kilometers across nine countries in South America. It is home to approximately 10% of all species on Earth, including over 40,000 plant species, 1,300 bird species, and more than 3,000 types of fish. Deforestation remains a critical threat, with an estimated 17% of the forest lost in the last 50 years."}
+{"id": "dev_012", "modality": "text", "prompt": "Explain the concept of blockchain in simple terms."}
+{"id": "dev_013", "modality": "text", "prompt": "Solve step by step: A rectangle has a perimeter of 30 cm and a width of 7 cm. What is its area?"}
+{"id": "dev_014", "modality": "text", "prompt": "Give me a one-paragraph story about a baker whose bread grants wishes."}
+{"id": "dev_015", "modality": "text", "prompt": "Write a Python function that reverses a linked list in place."}
+{"id": "dev_016", "modality": "text", "prompt": "Write a haiku about a broken clock."}
+{"id": "dev_017", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe human microbiome consists of trillions of microorganisms living in and on the human body, particularly in the gut. Research has linked the composition of gut bacteria to a wide range of health outcomes, from digestion and immunity to mental health. Dietary changes, antibiotics, and probiotics can all significantly alter the microbiome composition."}
+{"id": "dev_018", "modality": "text", "prompt": "Explain the concept of photosynthesis in simple terms."}
+{"id": "dev_019", "modality": "text", "prompt": "Who invented the light bulb and when?"}
+{"id": "dev_020", "modality": "text", "prompt": "Explain the concept of the Doppler effect in simple terms."}
+{"id": "dev_021", "modality": "text", "prompt": "Write a haiku about a sleeping cat."}
+{"id": "dev_022", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nQuantum computing leverages quantum mechanical phenomena such as superposition and entanglement to perform computations that would be infeasible for classical computers. While still in early stages, quantum computers have demonstrated quantum advantage in specific tasks. Major challenges include maintaining qubit coherence and scaling up the number of qubits while minimizing error rates."}
+{"id": "dev_023", "modality": "text", "prompt": "Give me a one-paragraph story about a lost letter that arrives 50 years late."}
+{"id": "dev_024", "modality": "text", "prompt": "What are the main differences between supervised learning and unsupervised learning?"}
+{"id": "dev_025", "modality": "text", "prompt": "What are the main differences between compiled languages and interpreted languages?"}
+{"id": "dev_026", "modality": "text", "prompt": "Write a haiku about fresh snow."}
+{"id": "dev_027", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe Amazon rainforest, often referred to as the lungs of the Earth, spans over 5.5 million square kilometers across nine countries in South America. It is home to approximately 10% of all species on Earth, including over 40,000 plant species, 1,300 bird species, and more than 3,000 types of fish. Deforestation remains a critical threat, with an estimated 17% of the forest lost in the last 50 years."}
+{"id": "dev_028", "modality": "text", "prompt": "What is the capital of Nigeria?"}
+{"id": "dev_029", "modality": "text", "prompt": "Explain the concept of gravity in simple terms."}
+{"id": "dev_030", "modality": "text", "prompt": "Solve step by step: What is the sum of the first 20 positive integers?"}
+{"id": "dev_031", "modality": "text", "prompt": "Write a short bash script that prints the top 10 most common words in a file."}
+{"id": "dev_032", "modality": "text", "prompt": "Write a haiku about an empty parking lot."}
+{"id": "dev_033", "modality": "text", "prompt": "What are the main differences between HTTP and HTTPS?"}
+{"id": "dev_034", "modality": "text", "prompt": "If a function has no side effects and always returns the same output for the same input, what can we conclude about whether it is a pure function?"}
+{"id": "dev_035", "modality": "text", "prompt": "Write a Python function that converts a Roman numeral string to an integer."}
+{"id": "dev_036", "modality": "text", "prompt": "List three advantages of open source software."}
+{"id": "dev_037", "modality": "text", "prompt": "Explain the concept of neural networks in simple terms."}
+{"id": "dev_038", "modality": "text", "prompt": "Explain the concept of supply and demand in simple terms."}
+{"id": "dev_039", "modality": "text", "prompt": "Write a haiku about a thunderstorm."}
+{"id": "dev_040", "modality": "text", "prompt": "Write a Python function that implements binary search on a sorted list."}
+{"id": "dev_041", "modality": "text", "prompt": "Write a short bash script that monitors disk usage and alerts if any partition exceeds 90%."}
+{"id": "dev_042", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "dev_043", "modality": "text", "prompt": "Explain the concept of plate tectonics in simple terms."}
+{"id": "dev_044", "modality": "text", "prompt": "Who invented penicillin and when?"}
+{"id": "dev_045", "modality": "text", "prompt": "Write a Python function that checks if a string is a valid palindrome ignoring spaces and punctuation."}
+{"id": "dev_046", "modality": "text", "prompt": "Give me a one-paragraph story about a time traveler stuck in a loop."}
+{"id": "dev_047", "modality": "text", "prompt": "What are the main differences between supervised learning and unsupervised learning?"}
+{"id": "dev_048", "modality": "text", "prompt": "Write a haiku about autumn leaves falling."}
+{"id": "dev_049", "modality": "text", "prompt": "If the price of oil increases and transportation costs rise, what can we conclude about consumer goods prices?"}
+{"id": "dev_050", "modality": "text", "prompt": "What are the main differences between supervised learning and unsupervised learning?"}
+{"id": "dev_051", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "dev_052", "modality": "text", "prompt": "Write a short bash script that counts the number of lines in all .py files in the current directory."}
+{"id": "dev_053", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe Great Barrier Reef is the world's largest coral reef system, stretching over 2,300 kilometers along the northeast coast of Australia. It supports an extraordinary diversity of marine life and generates significant economic value through tourism and fishing. However, rising ocean temperatures have caused mass coral bleaching events, threatening the long-term health of this ecosystem."}
+{"id": "dev_054", "modality": "text", "prompt": "List three advantages of vertical farming."}
+{"id": "dev_055", "modality": "text", "prompt": "Explain the concept of the greenhouse effect in simple terms."}
+{"id": "dev_056", "modality": "text", "prompt": "Explain the concept of neural networks in simple terms."}
+{"id": "dev_057", "modality": "text", "prompt": "What are the main differences between RAM and ROM?"}
+{"id": "dev_058", "modality": "text", "prompt": "If the price of oil increases and transportation costs rise, what can we conclude about consumer goods prices?"}
+{"id": "dev_059", "modality": "text", "prompt": "Solve step by step: If 3x + 7 = 22, what is x?"}
+{"id": "dev_060", "modality": "text", "prompt": "If the price of oil increases and transportation costs rise, what can we conclude about consumer goods prices?"}
+{"id": "dev_061", "modality": "text", "prompt": "Write a Python function that counts the frequency of each word in a given string."}
+{"id": "dev_062", "modality": "text", "prompt": "If every student passed the exam and Alice is a student, what can we conclude about Alice's exam result?"}
+{"id": "dev_063", "modality": "text", "prompt": "List three advantages of remote work."}
+{"id": "dev_064", "modality": "text", "prompt": "Solve step by step: What is the derivative of x^3 + 2x^2 - 5x + 1?"}
+{"id": "dev_065", "modality": "text", "prompt": "What is the capital of Brazil?"}
+{"id": "dev_066", "modality": "text", "prompt": "What is the capital of Germany?"}
+{"id": "dev_067", "modality": "text", "prompt": "What is the capital of Nigeria?"}
+{"id": "dev_068", "modality": "text", "prompt": "List three advantages of containerization."}
+{"id": "dev_069", "modality": "text", "prompt": "List three advantages of public transit."}
+{"id": "dev_070", "modality": "text", "prompt": "Solve step by step: What is 2^10?"}
+{"id": "dev_071", "modality": "text", "prompt": "Write a short bash script that prints the top 10 most common words in a file."}
+{"id": "dev_072", "modality": "text", "prompt": "Explain the concept of plate tectonics in simple terms."}
+{"id": "dev_073", "modality": "text", "prompt": "Write a Python function that implements binary search on a sorted list."}
+{"id": "dev_074", "modality": "text", "prompt": "Give me a one-paragraph story about a robot learning to paint."}
+{"id": "dev_075", "modality": "text", "prompt": "Write a haiku about debugging code."}
+{"id": "dev_076", "modality": "text", "prompt": "Give me a one-paragraph story about a dog who solves mysteries."}
+{"id": "dev_077", "modality": "text", "prompt": "Explain the concept of gravity in simple terms."}
+{"id": "dev_078", "modality": "text", "prompt": "If every student passed the exam and Alice is a student, what can we conclude about Alice's exam result?"}
+{"id": "dev_079", "modality": "text", "prompt": "What are the main differences between Linux and Windows?"}
+{"id": "dev_080", "modality": "text", "prompt": "Explain the concept of entropy in simple terms."}
+{"id": "dev_081", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "dev_082", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "dev_083", "modality": "text", "prompt": "List three advantages of open source software."}
+{"id": "dev_084", "modality": "text", "prompt": "Write a short bash script that finds the 5 largest files in /tmp."}
+{"id": "dev_085", "modality": "text", "prompt": "What is the capital of Canada?"}
+{"id": "dev_086", "modality": "text", "prompt": "Write a Python function that merges two sorted lists into one sorted list."}
+{"id": "dev_087", "modality": "text", "prompt": "Write a short bash script that renames all .txt files to .md in the current directory."}
+{"id": "dev_088", "modality": "text", "prompt": "Give me a one-paragraph story about a baker whose bread grants wishes."}
+{"id": "dev_089", "modality": "text", "prompt": "Who invented the transistor and when?"}
+{"id": "dev_090", "modality": "text", "prompt": "Solve step by step: What is 17 * 23 + 45?"}
+{"id": "dev_091", "modality": "text", "prompt": "What is the capital of Japan?"}
+{"id": "dev_092", "modality": "text", "prompt": "If the price of oil increases and transportation costs rise, what can we conclude about consumer goods prices?"}
+{"id": "dev_093", "modality": "text", "prompt": "If all mammals are warm-blooded and a whale is a mammal, what can we conclude about a whale's body temperature?"}
+{"id": "dev_094", "modality": "text", "prompt": "Explain the concept of opportunity cost in simple terms."}
+{"id": "dev_095", "modality": "text", "prompt": "List three advantages of early education."}
+{"id": "dev_096", "modality": "text", "prompt": "Solve step by step: What is the derivative of x^3 + 2x^2 - 5x + 1?"}
+{"id": "dev_097", "modality": "text", "prompt": "What is the capital of Kenya?"}
+{"id": "dev_098", "modality": "text", "prompt": "Write a haiku about a broken clock."}
+{"id": "dev_099", "modality": "text", "prompt": "Summarize the following text in two sentences:\n\nThe Great Barrier Reef is the world's largest coral reef system, stretching over 2,300 kilometers along the northeast coast of Australia. It supports an extraordinary diversity of marine life and generates significant economic value through tourism and fishing. However, rising ocean temperatures have caused mass coral bleaching events, threatening the long-term health of this ecosystem."}
