@@ -1,0 +1,33 @@
+# Local LLM endpoint for the agent runner. Exposes an OpenAI-compatible API
+# on host :8001. Pins GPU0 by default (overridable via AGENT_LLM_GPU).
+#
+# Tool-call parsing: vLLM needs a parser flag that matches the Gemma 4 chat
+# template. The exact name depends on your vLLM version — set it via
+# AGENT_LLM_TOOL_PARSER (commonly `gemma` / `gemma4` / `hermes`). If unset,
+# vLLM falls back to default tool-choice handling.
+
+services:
+  agent-llm:
+    image: vllm/vllm-openai:latest
+    container_name: gemma4-agent-llm
+    ipc: host
+    restart: unless-stopped
+    environment:
+      - HF_HOME=/root/.cache/huggingface
+      - HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-0}
+    volumes:
+      - ${HF_CACHE_DIR:-${HOME}/.cache/huggingface}:/root/.cache/huggingface
+    ports:
+      - "${AGENT_LLM_PORT:-8001}:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${AGENT_LLM_GPU:-0}"]
+              capabilities: [gpu]
+    command:
+      - --model=${AGENT_LLM_MODEL:-google/gemma-4-e4b-it}
+      - --enable-auto-tool-choice
+      - --tool-call-parser=${AGENT_LLM_TOOL_PARSER:-hermes}
+      - --max-model-len=${AGENT_LLM_MAX_LEN:-16384}
