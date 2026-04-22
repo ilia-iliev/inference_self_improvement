@@ -28,6 +28,10 @@ Online loop:
   dev [N]         Build /solution/, run on first N dev prompts (default 10),
                   verify tokens. Fast iteration; no baseline compare.
 
+Agent:
+  agent           Drop the LLM agent into its sandbox (see tools/README.md).
+                  /workspace/solution is rw; data/judge is not mounted.
+
 Misc:
   shell           Interactive bash shell in the base image.
 EOF
@@ -54,6 +58,18 @@ case "${1:-}" in
     dev)            preflight "$ENV_FILE"
                     shift
                     uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" dev ${1:+-n "$1"} ;;
+    agent)          preflight "$ENV_FILE"
+                    docker build -t gemma4-agent:latest "$SCRIPT_DIR/tools"
+                    docker run -it --rm --gpus all \
+                        -v "$SCRIPT_DIR/solution":/workspace/solution \
+                        -v "$SCRIPT_DIR/data/agent":/workspace/data/agent:ro \
+                        -v "$SCRIPT_DIR/judge":/workspace/judge:ro \
+                        -v "$SCRIPT_DIR/PROMPT.md":/workspace/PROMPT.md:ro \
+                        -v "$HF_CACHE_DIR":/root/.cache/huggingface:ro \
+                        -e MODEL_PATH="$MODEL_PATH" \
+                        -e TEXT_ONLY="${TEXT_ONLY:-1}" \
+                        -e HF_HUB_OFFLINE=1 \
+                        gemma4-agent:latest ;;
     shell)          preflight "$ENV_FILE"; dc run --rm challenge bash ;;
     *)              usage; exit 1 ;;
 esac

@@ -1,20 +1,30 @@
-# Agent Tool Surface
+# Agent Sandbox
 
-The allowlist in `settings.json` is the source of truth. This file explains *why* each category is allowed or denied.
+The runtime an LLM agent operates inside. Gives it a GPU-capable shell with python/uv/torch/vllm pre-installed, scoped to the files it's allowed to touch.
 
-## Allowed
+## What the agent sees
 
-- **File I/O inside `solution/`** — the agent's working directory. Read/Write/Edit freely.
-- **Read-only everywhere else** — so the agent can inspect the baseline, dev prompts, harness code.
-- **`uv run` / `uv pip` / `uv add`** — test code with real torch/transformers on the GPU before baking into the Dockerfile.
-- **`python3`** — same, for one-off probes.
-- **`nvidia-smi`** — inspect GPU, VRAM, driver.
-- **`docker build`** — iterate on the Dockerfile locally without the full submit cost.
-- **`./run_challenge.sh`** — the official build+run+score path.
+Mounted into `/workspace/`:
 
-## Denied
+- `solution/` — **rw**. The agent edits its Dockerfile, server.py, and any scratch here.
+- `data/agent/` — ro. Dev prompts + HF greedy references for local testing.
+- `judge/` — ro. Baseline reference impl (`judge/baseline/`) and current baseline timing (`judge/baseline.json`). Submit/client internals are visible but read-only.
+- `PROMPT.md` — ro. The task definition.
 
-- **Writes outside `solution/`** — the judge, baseline, and data are the invariants. If the agent could edit them, "score" becomes meaningless.
-- **Reads into `data/judge/`** — held-out eval set. Leaking it would let the agent tune to the exact prompts.
-- **`docker run` / `docker exec`** — launching containers directly sidesteps the judge's measurement protocol. Only the harness runs containers.
-- **`sudo`, `rm -rf`** — unnecessary for the task; block the obvious footguns.
+**Not mounted**: `data/judge/` (held-out eval set). There is no docker socket — the agent cannot launch containers.
+
+## Available inside the sandbox
+
+- `python3`, `uv` (add/remove packages freely, they're scoped to the container).
+- `torch`, `transformers`, `vllm`, `accelerate` pre-installed.
+- `nvidia-smi`, full GPU access.
+- Network (for `uv add`, `pip install`, etc.). HF Hub reads are offline — all model weights must come from the mounted HF cache.
+
+## Submission flow
+
+The agent cannot run the judge from inside the sandbox (no docker access). The loop is:
+
+1. Host: `./run_challenge.sh agent` drops the agent into the sandbox shell.
+2. Agent: iterates on `/workspace/solution/`, experiments with `python3`, `uv`, etc.
+3. Agent: exits when ready to be scored.
+4. Host: `./run_challenge.sh submit` (or `dev` for fast iteration) builds the agent's Dockerfile and scores it. Result lands in `solution/last_result.json`, which the agent sees on next entry.
