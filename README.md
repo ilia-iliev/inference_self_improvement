@@ -91,6 +91,13 @@ Per iteration:
 # see solution/last_result.json
 ```
 
+LLM-driven loop (optional; drives the edit step on the agent's behalf):
+```
+./run_challenge.sh serve-up       # local vLLM endpoint on :8001 (GPU AGENT_LLM_GPU)
+./run_challenge.sh loop [N]       # N iterations of agent-run → submit (default 5)
+./run_challenge.sh serve-down
+```
+
 Tests (no docker or GPU):
 ```
 bash tests/test_preflight.sh
