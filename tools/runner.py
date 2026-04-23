@@ -15,7 +15,7 @@ from pathlib import Path
 from openai import BadRequestError, OpenAI
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from agent_tools import SUBMIT_MARKER, TOOL_SCHEMAS, dispatch  # noqa: E402
+from agent_tools import SUBMIT_MARKER, TOOL_SCHEMAS, dispatch, block_read  # noqa: E402
 
 WORKSPACE = Path("/workspace")
 SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent / "system_prompt.md"
@@ -23,36 +23,84 @@ DEFAULT_MAX_TURNS = 200
 MAX_NUDGES = 3
 # Keep system + initial user msg + this many most-recent messages.
 CONTEXT_WINDOW_MSGS = 40
-# After this many consecutive all-stub turns, force a submit.
+# Auto-submit after this many consecutive turns where every read was a cache hit (truly stuck).
 STUB_LOOP_LIMIT = 3
+# Auto-submit after this many turns with no write/edit/bash at all (long-run safety net).
+NO_WRITE_LIMIT = 20
 
 NUDGE_MSG = (
     "You described your next step but did not call a tool. "
     "Please proceed immediately with a tool call."
 )
 
-FORCE_SUBMIT_MSG = (
-    "You have re-read all files multiple times without making changes. "
-    "Your solution already exists at /workspace/solution/. "
-    "Stop reading and call submit() now to evaluate what you have."
-)
+
+def _read_file_block(path: Path, label: str) -> list[str]:
+    try:
+        return [f"### {label} ({path})", "```", path.read_text().rstrip(), "```", ""]
+    except OSError:
+        return []
 
 
 def build_user_message() -> str:
-    parts = [
-        "# Task",
-        (WORKSPACE / "PROMPT.md").read_text(),
-        "",
-        "# Layout",
-        "- /workspace/solution/              (rw, your workspace)",
-        "- /workspace/solution/last_result.json  (rw, last eval result — read at /workspace/solution/last_result.json)",
-        "- /workspace/judge/baseline/        (ro, reference impl to beat)",
-        "- /workspace/data/agent/            (ro, dev prompts + HF greedy refs)",
-        "- /workspace/PROMPT.md              (ro, full task)",
-    ]
+    preloaded: list[Path] = []
+
+    parts: list[str] = []
+
+    # Task description
+    prompt_md = WORKSPACE / "PROMPT.md"
+    parts += ["# Task", prompt_md.read_text(), ""]
+    preloaded.append(prompt_md)
+
+    # Last eval result
     last = WORKSPACE / "solution" / "last_result.json"
     if last.exists():
-        parts += ["", "# Last eval result", last.read_text()]
+        parts += ["# Last eval result", last.read_text(), ""]
+        preloaded.append(last)
+
+    # Previous run notes — agent's own record of what was tried
+    notes = WORKSPACE / "solution" / "NOTES.md"
+    if notes.exists():
+        parts.append("# Previous run notes (your own log of what was tried)")
+        parts += _read_file_block(notes, "NOTES.md")
+        preloaded.append(notes)
+
+    # Baseline — model always wants to read this; inline it
+    baseline = WORKSPACE / "judge" / "baseline" / "server.py"
+    if baseline.exists():
+        parts.append("# Baseline (read-only reference)")
+        parts += _read_file_block(baseline, "baseline/server.py")
+        preloaded.append(baseline)
+
+    # Current solution files
+    sol = WORKSPACE / "solution"
+    solution_files = sorted(
+        p for p in sol.iterdir()
+        if p.is_file() and (p.suffix in (".py", ".txt", "") or p.name == "Dockerfile")
+    )
+    if solution_files:
+        parts.append("# Current solution files")
+        for p in solution_files:
+            parts += _read_file_block(p, p.name)
+            preloaded.append(p)
+
+    # Block read() on static/reference files only.
+    # Solution code files stay readable so the agent can verify before editing.
+    _editable_suffixes = {".py", ".txt", ""}
+    for p in preloaded:
+        is_solution_code = (
+            p.parent == WORKSPACE / "solution"
+            and (p.suffix in _editable_suffixes or p.name == "Dockerfile")
+        )
+        if not is_solution_code:
+            block_read(p)
+
+    parts += [
+        "# Instructions",
+        "The solution files above are your current working state — read them again with read()"
+        " if you need to verify before editing.",
+        "Make ONE meaningful edit to /workspace/solution/, then call submit().",
+    ]
+
     return "\n".join(parts)
 
 
@@ -62,10 +110,13 @@ def fmt_preview(s: str, n: int = 240) -> str:
 
 
 def _all_stubs(results: list[str]) -> bool:
-    """Return True if every tool result this turn was non-productive (stubs or read errors)."""
-    if not results:
-        return False
-    return all("already read" in r or '"error"' in r for r in results)
+    """True when every result was a read-cache hit — agent is re-reading unchanged files."""
+    return bool(results) and all("already read" in r for r in results)
+
+
+def _has_write(tool_calls: list) -> bool:
+    """True if any call this turn was a write, edit, bash, or uv (i.e. something productive)."""
+    return any(tc.function.name in ("write", "edit", "bash", "uv") for tc in tool_calls)
 
 
 def main() -> int:
@@ -99,20 +150,25 @@ def main() -> int:
         return trimmed
 
     nudges = 0
-    stub_turns = 0  # consecutive turns where all tool results were read-cache stubs
+    stub_turns = 0   # consecutive turns where every read was a cache hit
+    no_write_turns = 0  # consecutive turns with no write/edit/bash at all
 
     for turn in range(args.max_turns):
         print(f"\n[turn {turn}] → model", file=sys.stderr, flush=True)
 
-        # After too many all-stub turns, force a submit call.
+        # Auto-submit if stuck: all-stub loop OR no writes for too long.
         if stub_turns >= STUB_LOOP_LIMIT:
-            print(f"[agent] stub loop detected — forcing submit", file=sys.stderr, flush=True)
-            messages.append({"role": "user", "content": FORCE_SUBMIT_MSG})
-            stub_turns = 0
-            forced_tc = "required"
-            forced_choice: object = {"type": "function", "function": {"name": "submit"}}
-        else:
-            forced_choice = "required"
+            print(f"[agent] {STUB_LOOP_LIMIT} consecutive all-stub turns — auto-submitting",
+                  file=sys.stderr, flush=True)
+            dispatch("submit", "{}")
+            return 0
+        if no_write_turns >= NO_WRITE_LIMIT:
+            print(f"[agent] {NO_WRITE_LIMIT} turns without any write/edit/bash — auto-submitting",
+                  file=sys.stderr, flush=True)
+            dispatch("submit", "{}")
+            return 0
+
+        forced_choice = "required"
 
         # Retry with progressively smaller window on context-length overflow.
         w = window
@@ -181,6 +237,14 @@ def main() -> int:
                   file=sys.stderr, flush=True)
         else:
             stub_turns = 0
+
+        if _has_write(msg.tool_calls):
+            no_write_turns = 0
+        else:
+            no_write_turns += 1
+            if no_write_turns >= NO_WRITE_LIMIT // 2:
+                print(f"[agent] no write/edit/bash for {no_write_turns} turns",
+                      file=sys.stderr, flush=True)
 
         if SUBMIT_MARKER.exists():
             print(f"[turn {turn}] submit — exiting for host handoff.", file=sys.stderr, flush=True)

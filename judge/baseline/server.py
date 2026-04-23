@@ -13,6 +13,9 @@ import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 import torch
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -25,7 +28,9 @@ state: dict = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    model, proc, tok, device = load()
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        model, proc, tok, device = await loop.run_in_executor(pool, load)
     state.update(model=model, processor=proc, tokenizer=tok, device=device, ready=True)
     yield
 

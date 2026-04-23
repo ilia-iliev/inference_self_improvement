@@ -1,11 +1,5 @@
 # Local LLM endpoint for the agent runner. Exposes an OpenAI-compatible API
-# on host :8001. Pins GPU0 by default (overridable via AGENT_LLM_GPU).
-#
-# Tool-call parsing: vLLM needs a parser flag that matches the checkpoint's
-# chat template. Gemma 4's official chat template emits tool calls as
-# <|tool_call>call:name{..}<tool_call|>; the matching vLLM parser is `gemma4`,
-# shipped only in the `:gemma4-cu130` image (vLLM 0.19.1.dev + transformers 5.5,
-# which is also needed to load the Gemma4ForConditionalGeneration class).
+# on host :8001. Pins GPU0 by default (overridable via AGENT_LLM_GPU)
 
 services:
   agent-llm:
@@ -16,13 +10,7 @@ services:
     environment:
       - HF_HOME=/root/.cache/huggingface
       - HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-0}
-      # The image ships cuda-compat-12-9 (libcuda 575) which ldconfig prefers
-      # over the host-injected libcuda. Forward-compat is for running a newer
-      # CUDA runtime on an older driver; when the host driver is already
-      # newer (here 595+), the 575-era compat UMD fails to talk to the
-      # current kernel driver with Error 803. Prepending the host lib dir
-      # to LD_LIBRARY_PATH makes ld.so prefer the host libcuda and skips
-      # the compat layer entirely.
+      # Prefer the host-injected libcuda
       - LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64
     volumes:
       - /mnt/hdd2:/mnt/hdd2:ro
@@ -39,4 +27,4 @@ services:
       - --model=${AGENT_LLM_MODEL:-google/gemma-4-e4b-it}
       - --enable-auto-tool-choice
       - --tool-call-parser=${AGENT_LLM_TOOL_PARSER:-hermes}
-      - --max-model-len=${AGENT_LLM_MAX_LEN:-32768}
+      - --max-model-len=${AGENT_LLM_MAX_LEN:-65536}

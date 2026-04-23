@@ -76,6 +76,7 @@ agent_docker_run() {
     docker run --rm $extra_flags \
         --network host \
         --gpus "\"device=${AGENT_RUN_GPU}\"" \
+        --user "$(id -u):$(id -g)" \
         -v "$SCRIPT_DIR/solution":/workspace/solution \
         -v "$SCRIPT_DIR/data/agent":/workspace/data/agent:ro \
         -v "$SCRIPT_DIR/judge":/workspace/judge:ro \
@@ -105,20 +106,49 @@ case "${1:-}" in
                         2>&1 | tee "$SCRIPT_DIR/solution/agent_run.log" ;;
     loop)           preflight "$ENV_FILE"
                     iters="${2:-5}"
+                    _snap="$SCRIPT_DIR/solution/.loop-snapshot"
                     for i in $(seq 1 "$iters"); do
                         echo "=== loop iter $i/$iters ==="
+
+                        # Snapshot code files before agent runs so a failed/diverged
+                        # run can be rolled back. Excludes dot-files, last_result.json,
+                        # agent_run.log, and NOTES.md (notes accumulate across runs).
+                        rm -rf "$_snap"
+                        mkdir -p "$_snap"
+                        find "$SCRIPT_DIR/solution" -maxdepth 1 -type f \
+                            ! -name ".*" \
+                            ! -name "last_result.json" \
+                            ! -name "agent_run.log" \
+                            ! -name "NOTES.md" \
+                            -exec cp {} "$_snap/" \;
+
                         agent_build
                         agent_docker_run "" python3 /workspace/agent/runner.py \
                             2>&1 | tee "$SCRIPT_DIR/solution/agent_run.log" \
                             || echo "agent-run failed (iter $i), continuing"
                         marker="$SCRIPT_DIR/solution/.submit-request"
                         if [ ! -f "$marker" ]; then
-                            echo "no submit marker for iter $i; skipping eval, continuing"
+                            echo "no submit marker for iter $i — restoring pre-run snapshot"
+                            find "$_snap" -maxdepth 1 -type f -exec cp {} "$SCRIPT_DIR/solution/" \;
                             continue
                         fi
                         rm -f "$marker"
                         uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" \
                             || echo "submit reported non-zero (continuing)"
+                        # Append eval result to NOTES.md so the agent sees external outcomes.
+                        if [ -f "$SCRIPT_DIR/solution/last_result.json" ]; then
+                            _note="[eval iter $i] $(python3 -c "
+import json, sys
+r = json.load(open('$SCRIPT_DIR/solution/last_result.json'))
+if r.get('error'):
+    print(f'FAILED: {r[\"error\"]}')
+elif r.get('promoted'):
+    print(f'PROMOTED score={r[\"score\"]:.3f}')
+else:
+    print(f'score={r.get(\"score\",0):.3f} agent={r.get(\"agent_time\",\"?\"):.1f}s baseline={r.get(\"baseline_time\",\"?\"):.1f}s mismatched={r.get(\"num_mismatched\",\"?\")}')
+")"
+                            echo "$_note" >> "$SCRIPT_DIR/solution/NOTES.md"
+                        fi
                         if python3 -c "import json,sys; sys.exit(0 if json.load(open('$SCRIPT_DIR/solution/last_result.json')).get('promoted') else 1)"; then
                             echo "solution promoted — stopping loop."
                             exit 0

@@ -18,6 +18,7 @@ SUBMIT_MARKER = Path("/workspace/solution/.submit-request")
 # Session-level read cache: maps path → (mtime, content_hash).
 # On repeat reads of unchanged files we return a stub to save context tokens.
 _read_cache: dict[str, tuple[float, int]] = {}
+_blocked_paths: set[str] = set()  # paths the model may not read (already in context)
 
 TOOL_SCHEMAS = [
     {
@@ -146,8 +147,15 @@ def _truncate(s: str) -> str:
     return s[:head] + f"\n...[truncated {len(s) - MAX_OUTPUT_CHARS} chars]...\n" + s[-tail:]
 
 
+def block_read(path: str | Path) -> None:
+    """Permanently block read() access to a path (file is already in the model's context)."""
+    _blocked_paths.add(str(Path(path).resolve()))
+
+
 def t_read(path: str) -> dict:
     p = Path(path)
+    if str(p.resolve()) in _blocked_paths:
+        return {"error": f"not available: {path} is already provided in your context"}
     if not p.is_file():
         return {"error": f"not a file: {path}"}
     mtime = p.stat().st_mtime
