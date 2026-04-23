@@ -34,106 +34,67 @@ run_test() {
     "$@"
 }
 
-make_fake_cache() {
-    # $1 = cache dir, $2 = repo id (e.g. google/gemma-3-1b-it)
-    local dir="$1" repo="$2"
-    local safe="${repo//\//--}"
-    mkdir -p "$dir/hub/models--$safe/snapshots/deadbeef"
-    mkdir -p "$dir/hub/models--$safe/blobs"
-}
-
 # ---- tests ----
 
-test_missing_env_vars_fails() {
-    unset HF_CACHE_DIR MODEL_PATH
+test_missing_model_path_fails() {
+    unset MODEL_PATH
     local out rc
     out=$(check_env_vars 2>&1); rc=$?
-    assert "check_env_vars fails when unset" [ "$rc" -ne 0 ]
-    assert "error mentions both vars" grep -q "HF_CACHE_DIR and MODEL_PATH" <<<"$out"
+    assert "check_env_vars fails when MODEL_PATH unset" [ "$rc" -ne 0 ]
+    assert "error mentions MODEL_PATH" grep -q "MODEL_PATH" <<<"$out"
 }
 
-test_cache_dir_missing_fails() {
-    export HF_CACHE_DIR="/does/not/exist/xyz"
-    export MODEL_PATH="google/gemma-3-1b-it"
+test_model_path_missing_dir_fails() {
+    export MODEL_PATH="/does/not/exist/model"
     local rc
     check_env_vars >/dev/null 2>&1; rc=$?
-    assert "check_env_vars fails when cache dir missing" [ "$rc" -ne 0 ]
+    assert "check_env_vars fails when MODEL_PATH dir missing" [ "$rc" -ne 0 ]
+    unset MODEL_PATH
 }
 
-test_cache_dir_exists_but_model_missing() {
+test_happy_path_absolute() {
     local tmp; tmp=$(mktemp -d)
-    trap "rm -rf '$tmp'" RETURN
-    export HF_CACHE_DIR="$tmp"
-    export MODEL_PATH="google/gemma-3-1b-it"
+    trap "rm -rf '$tmp'; unset MODEL_PATH" RETURN
+    export MODEL_PATH="$tmp"
     local rc
     check_env_vars >/dev/null 2>&1; rc=$?
-    assert "check_env_vars fails when cached snapshot missing" [ "$rc" -ne 0 ]
-}
-
-test_happy_path_repo_id() {
-    local tmp; tmp=$(mktemp -d)
-    trap "rm -rf '$tmp'" RETURN
-    make_fake_cache "$tmp" "google/gemma-3-1b-it"
-    export HF_CACHE_DIR="$tmp"
-    export MODEL_PATH="google/gemma-3-1b-it"
-    local rc
-    check_env_vars >/dev/null 2>&1; rc=$?
-    assert "check_env_vars passes with valid cache layout" [ "$rc" -eq 0 ]
-}
-
-test_absolute_path_model_skips_cache_check() {
-    local tmp; tmp=$(mktemp -d)
-    trap "rm -rf '$tmp'" RETURN
-    export HF_CACHE_DIR="$tmp"
-    export MODEL_PATH="/models/local"
-    local rc
-    check_env_vars >/dev/null 2>&1; rc=$?
-    assert "check_env_vars accepts absolute path MODEL_PATH without cache check" [ "$rc" -eq 0 ]
+    assert "check_env_vars passes with existing MODEL_PATH directory" [ "$rc" -eq 0 ]
 }
 
 test_load_env_file_missing_is_noop() {
-    unset HF_CACHE_DIR MODEL_PATH
+    unset MODEL_PATH
     load_env_file "/does/not/exist/.env"
-    assert "load_env_file on missing path leaves vars unset" [ -z "${HF_CACHE_DIR:-}" ]
+    assert "load_env_file on missing path leaves MODEL_PATH unset" [ -z "${MODEL_PATH:-}" ]
 }
 
 test_load_env_file_sets_vars() {
     local tmp; tmp=$(mktemp -d)
-    trap "rm -rf '$tmp'" RETURN
+    trap "rm -rf '$tmp'; unset MODEL_PATH" RETURN
     cat >"$tmp/.env" <<EOF
-HF_CACHE_DIR=/some/cache
-MODEL_PATH=org/name
-TEXT_ONLY=1
+MODEL_PATH=/mnt/hdd2/google/gemma-4-E4B-it
 EOF
-    unset HF_CACHE_DIR MODEL_PATH TEXT_ONLY
+    unset MODEL_PATH
     load_env_file "$tmp/.env"
-    assert "load_env_file exports HF_CACHE_DIR" [ "$HF_CACHE_DIR" = "/some/cache" ]
-    assert "load_env_file exports MODEL_PATH" [ "$MODEL_PATH" = "org/name" ]
-    assert "load_env_file exports TEXT_ONLY" [ "$TEXT_ONLY" = "1" ]
+    assert "load_env_file exports MODEL_PATH" [ "$MODEL_PATH" = "/mnt/hdd2/google/gemma-4-E4B-it" ]
 }
 
 test_preflight_rolls_it_all_up() {
     local tmp; tmp=$(mktemp -d)
-    trap "rm -rf '$tmp'" RETURN
-    make_fake_cache "$tmp/hfcache" "google/gemma-3-1b-it"
+    trap "rm -rf '$tmp'; unset MODEL_PATH" RETURN
+    mkdir -p "$tmp/model"
     cat >"$tmp/.env" <<EOF
-HF_CACHE_DIR=$tmp/hfcache
-MODEL_PATH=google/gemma-3-1b-it
-TEXT_ONLY=1
+MODEL_PATH=$tmp/model
 EOF
-    unset HF_CACHE_DIR MODEL_PATH TEXT_ONLY
+    unset MODEL_PATH
     local rc
     preflight "$tmp/.env" >/dev/null 2>&1; rc=$?
-    assert "preflight succeeds with valid .env + cache" [ "$rc" -eq 0 ]
-    assert "preflight exports HF_CACHE_DIR" [ "$HF_CACHE_DIR" = "$tmp/hfcache" ]
-    assert "preflight exports TEXT_ONLY" [ "$TEXT_ONLY" = "1" ]
+    assert "preflight succeeds with valid .env + model dir" [ "$rc" -eq 0 ]
+    assert "preflight exports MODEL_PATH" [ "$MODEL_PATH" = "$tmp/model" ]
 }
 
-run_test "missing env vars"           test_missing_env_vars_fails
-run_test "cache dir missing"          test_cache_dir_missing_fails
-run_test "model missing from cache"   test_cache_dir_exists_but_model_missing
-run_test "happy path (repo id)"       test_happy_path_repo_id
-run_test "absolute path MODEL_PATH"   test_absolute_path_model_skips_cache_check
+run_test "missing MODEL_PATH"         test_missing_model_path_fails
+run_test "MODEL_PATH dir missing"     test_model_path_missing_dir_fails
+run_test "happy path (absolute)"      test_happy_path_absolute
 run_test "load_env_file missing"      test_load_env_file_missing_is_noop
 run_test "load_env_file sets vars"    test_load_env_file_sets_vars
 run_test "preflight end-to-end"       test_preflight_rolls_it_all_up

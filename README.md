@@ -1,4 +1,4 @@
-# Gemma Inference Throughput Challenge
+# Inference Throughput Challenge
 
 A self-improving eval harness. An agent iteratively edits `solution/`, the harness builds it, times it against a baseline on held-out prompts, and promotes the solution to baseline when it's fast enough and outputs are still bit-exact.
 
@@ -6,17 +6,17 @@ A self-improving eval harness. An agent iteratively edits `solution/`, the harne
 
 ```
 PROMPT.md              agent-facing problem statement
-solution/              agent's workspace (Dockerfile + code)
-judge/                 harness (host-side orchestration + baseline + docker infra)
-  baseline/            reference impl the agent has to beat
+solution/              agent's workspace (seeded from judge/baseline/ via init-solution)
+judge/                 harness
+  baseline/            reference impl (server.py + inference.py share _common.py)
   docker/              base image, compose, .env
   submit.py            build → run → verify → score → promote
   client.py            HTTP driver
-  baseline.json        current baseline timing
+  baseline.json        current baseline timing (auto-generated on first submit)
 data/
   agent/               dev prompts + refs + assets (visible)
   judge/               eval prompts + refs + assets (held out)
-tools/                 permission allowlist for the agent runner
+tools/                 agent sandbox image + runner
 tests/                 preflight + client unit tests (no docker, no GPU)
 run_challenge.sh       one-shot CLI entry points
 ```
@@ -64,15 +64,13 @@ Promotion gate: `score ≥ 1.05` and all outputs match → solution image is ret
 
 - ≥1 NVIDIA GPU, driver ≥570 (CUDA 12.8)
 - Docker + compose + `nvidia-container-toolkit`
-- Target model in the local HF cache (default: `google/gemma-3-1b-it`)
+- Target model in the local HF cache or on disk (set via `MODEL_PATH` in `judge/docker/.env`)
 
 ## Configuration
 
 Copy `judge/docker/.env.example` → `judge/docker/.env`:
 
-- `HF_CACHE_DIR` — host path, mounted read-only at `/root/.cache/huggingface`
-- `MODEL_PATH` — HF repo id (offline-resolved) or absolute in-container path
-- `TEXT_ONLY` — `1` uses `AutoTokenizer + AutoModelForCausalLM`; `0` switches to `AutoProcessor + AutoModelForImageTextToText` for image/audio prompts
+- `MODEL_PATH` — absolute path to the model directory (must be reachable inside containers via the disk-level volume mount). Modality (text-only vs image/audio) is detected automatically from the model's `config.json`.
 
 ## Running
 
@@ -87,7 +85,8 @@ Per iteration:
 ```
 # agent edits solution/Dockerfile and/or solution/server.py
 ./run_challenge.sh submit         # build, evaluate, score, maybe promote
-                                  # auto-inits baseline timing on first run
+                                  # first run seeds solution/ from judge/baseline/
+                                  # and initializes baseline timing
 # see solution/last_result.json
 ```
 

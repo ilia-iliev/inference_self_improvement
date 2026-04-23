@@ -1,27 +1,20 @@
 #!/usr/bin/env python3
 """
-Orchestrator for the online eval loop.
-
-Subcommands:
-  submit          Build solution image, run eval, verify, score, write
-                  /solution/last_result.json. Promote if score >= 1.05 and match.
-                  First run auto-initializes baseline timing.
-  dev             Build solution image, run eval on first N dev prompts,
-                  verify against dev_reference. No baseline comparison.
+Build the solution image, run eval, verify, score, promote if score >= 1.05
+and all tokens match. First run auto-initializes baseline timing.
 
 Runs on the host via: uv run --with httpx --with transformers --with sentencepiece \
-    python3 judge/submit.py <subcommand>
+    python3 judge/submit.py
 """
 
 from __future__ import annotations
 
-import argparse
 import asyncio
 import json
 import os
+import shutil
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 import httpx  # noqa: F401  # imported for side effect of failing fast if missing
@@ -38,8 +31,6 @@ BASELINE_JSON = JUDGE_DIR / "baseline.json"
 LAST_RESULT_JSON = SOLUTION_DIR / "last_result.json"
 EVAL_PROMPTS = DATA_DIR / "judge" / "eval_prompts.jsonl"
 EVAL_REFERENCE = DATA_DIR / "judge" / "eval_reference.jsonl"
-DEV_PROMPTS = DATA_DIR / "agent" / "dev_prompts.jsonl"
-DEV_REFERENCE = DATA_DIR / "agent" / "dev_reference.jsonl"
 
 BASELINE_TAG = "gemma4-baseline:current"
 SOLUTION_TAG = "gemma4-solution:latest"
@@ -49,19 +40,8 @@ BASE_URL = f"http://localhost:{HOST_PORT}"
 
 PROMOTION_THRESHOLD = 1.05
 
-HF_CACHE = os.environ.get("HF_CACHE_DIR") or (Path.home() / ".cache" / "huggingface").as_posix()
-MODEL_PATH = os.environ.get("MODEL_PATH", "google/gemma-3-1b-it")
-TEXT_ONLY = os.environ.get("TEXT_ONLY", "1") == "1"
-# Host-side tokenizer: resolve MODEL_PATH to the HF cache snapshot dir so we
-# don't need to re-fetch or mount the container-side path.
-if MODEL_PATH.startswith("/"):
-    HOST_TOKENIZER_PATH = MODEL_PATH
-else:
-    _cache_root = Path(HF_CACHE) / "hub" / f"models--{MODEL_PATH.replace('/', '--')}" / "snapshots"
-    _snaps = sorted(_cache_root.iterdir()) if _cache_root.is_dir() else []
-    if not _snaps:
-        sys.exit(f"ERROR: no HF cache snapshot for {MODEL_PATH} at {_cache_root}")
-    HOST_TOKENIZER_PATH = str(_snaps[-1])
+MODEL_PATH = os.environ["MODEL_PATH"]
+HOST_TOKENIZER_PATH = MODEL_PATH
 
 
 # ---------- shell / docker primitives ----------
@@ -84,13 +64,13 @@ def stop_container(name: str) -> None:
 
 def run_container(tag: str, name: str) -> None:
     stop_container(name)
+    submit_gpu = os.environ.get("SUBMIT_GPU", "1")
     sh([
         "docker", "run", "-d", "--rm",
-        "--gpus", "all",
+        "--gpus", f"device={submit_gpu}",
         "-e", f"MODEL_PATH={MODEL_PATH}",
-        "-e", f"TEXT_ONLY={'1' if TEXT_ONLY else '0'}",
         "-e", "HF_HUB_OFFLINE=1",
-        "-v", f"{HF_CACHE}:/root/.cache/huggingface:ro",
+        "-v", "/mnt/hdd2:/mnt/hdd2:ro",
         "-v", f"{DATA_DIR}:/data:ro",
         "-p", f"{HOST_PORT}:8000",
         "--name", name,
@@ -166,8 +146,19 @@ def ensure_baseline() -> dict:
     return baseline
 
 
+def ensure_solution() -> None:
+    """Seed solution/ from judge/baseline/ on first submit (no Dockerfile present)."""
+    if (SOLUTION_DIR / "Dockerfile").exists():
+        return
+    print("solution/ has no Dockerfile — seeding from judge/baseline/...", file=sys.stderr)
+    SOLUTION_DIR.mkdir(parents=True, exist_ok=True)
+    for name in ("server.py", "_common.py", "Dockerfile"):
+        shutil.copy2(BASELINE_DIR / name, SOLUTION_DIR / name)
+
+
 def cmd_submit() -> int:
     require_eval_inputs()
+    ensure_solution()
     baseline = ensure_baseline()
     print("Building solution image...", file=sys.stderr)
     build_image(SOLUTION_DIR, SOLUTION_TAG)
@@ -218,41 +209,5 @@ def cmd_submit() -> int:
     return 0 if payload["error"] is None else 1
 
 
-def cmd_dev(n: int) -> int:
-    for p in (DEV_PROMPTS, DEV_REFERENCE):
-        if not p.exists():
-            sys.exit(f"ERROR: {p} missing. Run ./run_challenge.sh data first.")
-    prompts = load_prompts(DEV_PROMPTS)[:n]
-    reference = load_prompts(DEV_REFERENCE)[:n]
-    print(f"Building solution image...", file=sys.stderr)
-    build_image(SOLUTION_DIR, SOLUTION_TAG)
-    print(f"Running dev eval on {len(prompts)} prompts...", file=sys.stderr)
-    result = eval_image(SOLUTION_TAG, prompts)
-    if not result.get("ready"):
-        print(json.dumps({"error": f"not ready: {result.get('error')}"}, indent=2))
-        return 1
-    _, mismatched, first_bad = verify(result["responses"], reference)
-    payload = {
-        "wall_time_seconds": result["wall_time_seconds"],
-        "num_prompts": len(prompts),
-        "num_mismatched": mismatched,
-        "first_mismatch_id": first_bad,
-    }
-    print(json.dumps(payload, indent=2))
-    return 0 if mismatched == 0 else 1
-
-
-def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    subs = p.add_subparsers(dest="cmd", required=True)
-    subs.add_parser("submit")
-    dev_p = subs.add_parser("dev")
-    dev_p.add_argument("-n", type=int, default=10, help="number of dev prompts (default 10)")
-    args = p.parse_args()
-    if args.cmd == "dev":
-        return cmd_dev(args.n)
-    return cmd_submit()
-
-
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(cmd_submit())

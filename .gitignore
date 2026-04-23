@@ -11,6 +11,13 @@ data/judge/assets/
 # Pipeline artifacts (regenerable)
 data/agent/dev_reference.jsonl
 data/judge/eval_reference.jsonl
+judge/baseline.json
 solution/last_result.json
 solution/outputs.jsonl
 solution/timing.json
+
+# Solution is agent-owned: seeded by `run_challenge.sh init-solution` from
+# judge/baseline/. Anything the agent drops in here is scratch.
+solution/
+!solution/.gitkeep
+.pytest_cache/

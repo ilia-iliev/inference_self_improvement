@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate synthetic multimodal assets and prompt sets for the Gemma 4 2B
-inference throughput challenge.
+Generate synthetic multimodal assets and prompts for the inference throughput challenge.
 
 Creates:
   /data/agent/assets/          — dev images (.png) and audio (.wav)
@@ -24,6 +23,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from transformers import AutoConfig
 
 SEED = 42
 NUM_DEV = 100
@@ -34,15 +34,16 @@ EVAL_ASSETS_DIR = Path("/data/judge/assets")
 DEV_OUT = Path("/data/agent/dev_prompts.jsonl")
 EVAL_OUT = Path("/data/judge/eval_prompts.jsonl")
 
-TEXT_ONLY = os.environ.get("TEXT_ONLY", "1") == "1"
+_cfg = AutoConfig.from_pretrained(os.environ["MODEL_PATH"])
+_multimodal = hasattr(_cfg, "vision_config") or hasattr(_cfg, "audio_config")
 
 # ---------------------------------------------------------------------------
 # Modality distribution (approximate)
 # ---------------------------------------------------------------------------
 # Multimodal: 60% text, 25% image, 15% audio. Text-only: 100% text.
 MODALITY_WEIGHTS = (
-    {"text": 1.0} if TEXT_ONLY
-    else {"text": 0.60, "image": 0.25, "audio": 0.15}
+    {"text": 0.60, "image": 0.25, "audio": 0.15} if _multimodal
+    else {"text": 1.0}
 )
 
 # ---------------------------------------------------------------------------

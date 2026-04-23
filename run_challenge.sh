@@ -17,6 +17,54 @@ AGENT_RUN_GPU="${AGENT_RUN_GPU:-1}"
 AGENT_LLM_URL="${AGENT_LLM_URL:-http://localhost:${AGENT_LLM_PORT:-8001}/v1}"
 AGENT_LLM_MODEL="${AGENT_LLM_MODEL:-google/gemma-4-e4b-it}"
 
+usage() {
+    cat >&2 <<'EOF'
+Usage: run_challenge.sh <command>
+
+Setup:
+  preflight          Validate .env + HF cache layout. No docker.
+  build              Build the base challenge image (heavy, one-time).
+  data               Generate synthetic prompts + assets + HF greedy refs
+                     for dev + eval sets.
+
+Online loop:
+  submit             Build solution/, evaluate, score, promote if >= 1.05x.
+                     On first run, seeds solution/ from judge/baseline/ and
+                     initializes baseline timing.
+
+Agent:
+  agent              Interactive bash shell in the sandbox (human/debug).
+                     solution/ is rw; data/judge is not mounted.
+  agent-run          LLM agent loop in the sandbox, non-interactive.
+                     Talks to AGENT_LLM_URL.
+  loop [N]           Host-side iterate: agent-run → submit, up to N (default 5).
+                     Stops on promotion or submit-less agent exit.
+  serve-up           Start the local LLM endpoint (serve/compose.yml).
+  serve-down         Stop it.
+
+Misc:
+  shell              Interactive bash shell in the base image.
+
+Env knobs (see judge/docker/.env.example):
+  AGENT_LLM_GPU, AGENT_RUN_GPU, AGENT_LLM_URL, AGENT_LLM_MODEL
+EOF
+}
+
+dc() {
+    detect_compose
+    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" "$@"
+}
+
+serve_dc() {
+    detect_compose
+    "${COMPOSE_CMD[@]}" -f "$SERVE_COMPOSE_FILE" "$@"
+}
+
+run() {
+    preflight "$ENV_FILE"
+    dc run --rm challenge "$@"
+}
+
 agent_build() {
     docker build -t gemma4-agent:latest "$SCRIPT_DIR/tools"
 }
@@ -32,99 +80,44 @@ agent_docker_run() {
         -v "$SCRIPT_DIR/data/agent":/workspace/data/agent:ro \
         -v "$SCRIPT_DIR/judge":/workspace/judge:ro \
         -v "$SCRIPT_DIR/PROMPT.md":/workspace/PROMPT.md:ro \
-        -v "$HF_CACHE_DIR":/root/.cache/huggingface:ro \
         -e MODEL_PATH="$MODEL_PATH" \
-        -e TEXT_ONLY="${TEXT_ONLY:-1}" \
         -e HF_HUB_OFFLINE=1 \
         -e AGENT_LLM_URL="$AGENT_LLM_URL" \
         -e AGENT_LLM_MODEL="$AGENT_LLM_MODEL" \
         gemma4-agent:latest "$@"
 }
 
-serve_dc() {
-    detect_compose
-    "${COMPOSE_CMD[@]}" -f "$SERVE_COMPOSE_FILE" "$@"
-}
-
-usage() {
-    cat >&2 <<'EOF'
-Usage: run_challenge.sh <command>
-
-Setup:
-  preflight       Validate .env + HF cache layout. No docker invoked.
-  build           Build the base challenge image (heavy, one-time).
-  data            Generate synthetic prompts + assets, then HF greedy references
-                  for dev + eval sets.
-
-Online loop:
-  submit          Build /solution/, evaluate on all prompts, score, promote if >= 1.05x.
-                  Auto-initializes baseline on first run (delete judge/baseline.json to force).
-  dev [N]         Build /solution/, run on first N dev prompts (default 10),
-                  verify tokens. Fast iteration; no baseline compare.
-
-Agent:
-  agent           Drop into an interactive bash shell in the sandbox (human/debug).
-                  /workspace/solution is rw; data/judge is not mounted.
-  agent-run       Run the LLM agent loop non-interactively in the sandbox.
-                  Talks to AGENT_LLM_URL (default http://localhost:8001/v1).
-                  Exits on `submit` tool call or when the model stops.
-  loop [N]        Host-side iterate: agent-run → submit, up to N times (default 5).
-                  Stops early on promotion or submit-less agent exit.
-  serve-up        Start the local LLM endpoint (serve/compose.yml, GPU AGENT_LLM_GPU).
-  serve-down      Stop it.
-
-Misc:
-  shell           Interactive bash shell in the base image.
-
-Env knobs:
-  AGENT_LLM_GPU   (default 0)    GPU for the LLM serving container
-  AGENT_RUN_GPU   (default 1)    GPU exposed to the agent sandbox
-  AGENT_LLM_URL   (default http://localhost:8001/v1)
-  AGENT_LLM_MODEL (default google/gemma-4-e4b-it)
-EOF
-}
-
-dc()  {
-    detect_compose
-    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" "$@"
-}
-run() {
-    preflight "$ENV_FILE"
-    dc run --rm challenge "$@"
-}
-
 case "${1:-}" in
     "")             usage; exit 1 ;;
-    preflight)      preflight "$ENV_FILE" && echo "preflight OK: HF_CACHE_DIR=$HF_CACHE_DIR MODEL_PATH=$MODEL_PATH" ;;
+    preflight)      preflight "$ENV_FILE" && echo "preflight OK: MODEL_PATH=$MODEL_PATH" ;;
     build)          preflight "$ENV_FILE"; dc build challenge ;;
     data)           run python3 /data/generate_prompts.py
                     run python3 /judge/baseline/inference.py /data/agent/dev_prompts.jsonl  /data/agent/dev_reference.jsonl
                     run python3 /judge/baseline/inference.py /data/judge/eval_prompts.jsonl /data/judge/eval_reference.jsonl ;;
     submit)         preflight "$ENV_FILE"
-                    uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" submit ;;
-    dev)            preflight "$ENV_FILE"
-                    shift
-                    uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" dev ${1:+-n "$1"} ;;
+                    uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" ;;
     agent)          preflight "$ENV_FILE"
                     agent_build
                     agent_docker_run "-it" ;;
     agent-run)      preflight "$ENV_FILE"
                     agent_build
-                    agent_docker_run "" python3 /workspace/agent/runner.py ;;
+                    agent_docker_run "" python3 /workspace/agent/runner.py \
+                        2>&1 | tee "$SCRIPT_DIR/solution/agent_run.log" ;;
     loop)           preflight "$ENV_FILE"
-                    agent_build
                     iters="${2:-5}"
                     for i in $(seq 1 "$iters"); do
                         echo "=== loop iter $i/$iters ==="
+                        agent_build
                         agent_docker_run "" python3 /workspace/agent/runner.py \
-                            || { echo "agent-run failed (iter $i)"; exit 1; }
+                            2>&1 | tee "$SCRIPT_DIR/solution/agent_run.log" \
+                            || echo "agent-run failed (iter $i), continuing"
                         marker="$SCRIPT_DIR/solution/.submit-request"
                         if [ ! -f "$marker" ]; then
-                            echo "agent exited without calling submit; stopping loop."
-                            exit 0
+                            echo "no submit marker for iter $i; skipping eval, continuing"
+                            continue
                         fi
                         rm -f "$marker"
-                        uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" submit \
+                        uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" \
                             || echo "submit reported non-zero (continuing)"
                         if python3 -c "import json,sys; sys.exit(0 if json.load(open('$SCRIPT_DIR/solution/last_result.json')).get('promoted') else 1)"; then
                             echo "solution promoted — stopping loop."

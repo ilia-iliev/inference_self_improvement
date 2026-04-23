@@ -11,9 +11,13 @@ import subprocess
 from pathlib import Path
 
 DEFAULT_TIMEOUT = 300
-MAX_OUTPUT_CHARS = 16000  # keep tool results from blowing up context
+MAX_OUTPUT_CHARS = 3000  # keep tool results from blowing up context
 
 SUBMIT_MARKER = Path("/workspace/solution/.submit-request")
+
+# Session-level read cache: maps path → (mtime, content_hash).
+# On repeat reads of unchanged files we return a stub to save context tokens.
+_read_cache: dict[str, tuple[float, int]] = {}
 
 TOOL_SCHEMAS = [
     {
@@ -146,13 +150,21 @@ def t_read(path: str) -> dict:
     p = Path(path)
     if not p.is_file():
         return {"error": f"not a file: {path}"}
-    return {"content": _truncate(p.read_text())}
+    mtime = p.stat().st_mtime
+    text = p.read_text()
+    h = hash(text)
+    key = str(p.resolve())
+    if _read_cache.get(key) == (mtime, h):
+        return {"note": f"[already read — {path} is unchanged. Stop re-reading. Use write/edit/bash to make progress, then call submit.]"}
+    _read_cache[key] = (mtime, h)
+    return {"content": _truncate(text)}
 
 
 def t_write(path: str, content: str) -> dict:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(content)
+    _read_cache.pop(str(p.resolve()), None)  # invalidate so next read returns fresh content
     return {"ok": True, "bytes": len(content)}
 
 
@@ -167,6 +179,7 @@ def t_edit(path: str, old_string: str, new_string: str) -> dict:
     if count > 1:
         return {"error": f"old_string matches {count} times; expand it until unique"}
     p.write_text(src.replace(old_string, new_string, 1))
+    _read_cache.pop(str(p.resolve()), None)  # invalidate so next read returns fresh content
     return {"ok": True}
 
 
@@ -198,8 +211,8 @@ def dispatch(name: str, arguments_json: str) -> str:
     """Route a tool call. Returns a JSON-serialized result string."""
     try:
         kwargs = json.loads(arguments_json) if arguments_json else {}
-    except json.JSONDecodeError as e:
-        return json.dumps({"error": f"invalid json arguments: {e}"})
+    except json.JSONDecodeError:
+        kwargs = {}  # tolerate malformed args (submit takes none; others will TypeError)
     fn = DISPATCH.get(name)
     if fn is None:
         return json.dumps({"error": f"unknown tool: {name}"})

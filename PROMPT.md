@@ -4,7 +4,7 @@ Maximize inference throughput on this host's GPU(s). You are given a working ref
 
 ## Constraints
 
-- **Hardware.** NVIDIA GPU(s), CUDA 12.8. The model must live on CUDA.
+- **Hardware.** NVIDIA GPU(s)
 - **Decoding.** Greedy, `max_new_tokens=256`, token-for-token identical to reference
 - **Batching.** The judge fires all eval prompts concurrently against your server. Timing is wall clock from first POST to last response.
 - **Deliverable.** `solution/Dockerfile` + whatever it references. The built image must serve `:8000`.
