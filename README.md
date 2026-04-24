@@ -1,6 +1,6 @@
-This is an example implementation for the challenge below. My home setup is two 3090s - one reserved for the agent loop and another for iterating on solutions. I constrained the iteration to dockerfiles.
+This is an example implementation for the challenge below. My home setup is two 3090s - one reserved for the agent loop and another for iterating on solutions. I don't know how portable this project is.
 
-I used gemma4-e4b (full weights) for both the agent loop and the inference improvement. The system does loop through hypotheses but I don't think the model is powerful enough to beat the baseline. Nevertheless, it was a great learniong experience.
+I used gemma4-e4b (full weights) for both the agent loop and the inference improvement. The system does loop through hypotheses - it was smart enough for trivial speed-up (i.e. it enabled inference mode on vllm) but I'm not sure that particular model is powerful enough to come up with more complex/interesting solutions. Nevertheless, it was a great learning experience.
 
 I used a coding assistant (claude code)
 
