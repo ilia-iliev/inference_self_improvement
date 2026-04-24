@@ -31,7 +31,9 @@ async def wait_for_ready(client: httpx.AsyncClient, timeout_s: float = 300.0) ->
     return False
 
 
-async def _one(client: httpx.AsyncClient, prompt: dict, request_timeout_s: float) -> dict:
+async def _one(
+    client: httpx.AsyncClient, prompt: dict, request_timeout_s: float
+) -> dict:
     r = await client.post("/v1/completions", json=prompt, timeout=request_timeout_s)
     r.raise_for_status()
     return r.json()
@@ -42,7 +44,9 @@ async def fire_all(
 ) -> tuple[list[dict], float]:
     """Fire all prompts concurrently. Return (responses_in_input_order, wall_seconds)."""
     t0 = time.perf_counter()
-    responses = await asyncio.gather(*(_one(client, p, request_timeout_s) for p in prompts))
+    responses = await asyncio.gather(
+        *(_one(client, p, request_timeout_s) for p in prompts)
+    )
     return responses, time.perf_counter() - t0
 
 
