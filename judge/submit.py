@@ -56,17 +56,31 @@ def build_image(build_ctx: Path, tag: str) -> None:
 
 
 def stop_container(name: str) -> None:
-    subprocess.run(
-        ["docker", "stop", name], check=False,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    # Stop then force-remove. We no longer use `docker run --rm` because a
+    # crashed container gets auto-removed before we can capture its logs.
+    for argv in (["docker", "stop", name], ["docker", "rm", "-f", name]):
+        subprocess.run(
+            argv, check=False,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+
+
+def get_container_logs(name: str, tail: int = 200) -> str:
+    """Return the last `tail` lines of a container's stdout+stderr, or '' on failure."""
+    r = subprocess.run(
+        ["docker", "logs", "--tail", str(tail), name],
+        capture_output=True, text=True, check=False,
     )
+    # docker logs writes container stdout to its stdout, stderr to its stderr.
+    merged = (r.stdout + r.stderr).strip()
+    return merged
 
 
 def run_container(tag: str, name: str) -> None:
     stop_container(name)
     submit_gpu = os.environ.get("SUBMIT_GPU", "1")
     sh([
-        "docker", "run", "-d", "--rm",
+        "docker", "run", "-d",
         "--gpus", f"device={submit_gpu}",
         "-e", f"MODEL_PATH={MODEL_PATH}",
         "-e", "HF_HUB_OFFLINE=1",
@@ -106,10 +120,17 @@ def verify(responses: list[dict], reference: list[dict]) -> tuple[bool, int, str
 # ---------- eval flow ----------
 
 def eval_image(tag: str, prompts: list[dict]) -> dict:
-    """Build+run assumed done. Start container, measure, stop. Return eval result dict."""
+    """Build+run assumed done. Start container, measure, stop. Return eval result dict.
+
+    On failure (server never became ready, or request raised), attach the
+    container's last log lines so the agent can see the actual traceback.
+    """
     run_container(tag, CONTAINER_NAME)
     try:
-        return asyncio.run(measure_timing(prompts))
+        result = asyncio.run(measure_timing(prompts))
+        if not result.get("ready"):
+            result["container_logs"] = get_container_logs(CONTAINER_NAME)
+        return result
     finally:
         stop_container(CONTAINER_NAME)
 
@@ -175,6 +196,8 @@ def cmd_submit() -> int:
     }
     if not result.get("ready"):
         payload["error"] = f"not ready: {result.get('error')}"
+        if result.get("container_logs"):
+            payload["container_logs"] = result["container_logs"]
         LAST_RESULT_JSON.write_text(json.dumps(payload, indent=2))
         print(json.dumps(payload, indent=2))
         return 1

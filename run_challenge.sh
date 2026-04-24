@@ -129,7 +129,7 @@ case "${1:-}" in
                         marker="$SCRIPT_DIR/solution/.submit-request"
                         if [ ! -f "$marker" ]; then
                             echo "no submit marker for iter $i — restoring pre-run snapshot"
-                            find "$_snap" -maxdepth 1 -type f -exec cp {} "$SCRIPT_DIR/solution/" \;
+                            find "$_snap" -maxdepth 1 -type f -exec cp -f {} "$SCRIPT_DIR/solution/" \;
                             continue
                         fi
                         rm -f "$marker"
