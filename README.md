@@ -1,3 +1,10 @@
+This is an example implementation for the challenge below. My home setup is two 3090s - one reserved for the agent loop and another for iterating on solutions. I constrained the iteration to dockerfiles.
+
+I used gemma4-e4b (full weights) for both the agent loop and the inference improvement. The system does loop through hypotheses but I don't think the model is powerful enough to beat the baseline. Nevertheless, it was a great learniong experience.
+
+I used a coding assistant (claude code)
+
+
 # Inference Throughput Challenge
 
 A self-improving eval harness. An agent iteratively edits `solution/`, the harness builds it, times it against a baseline on held-out prompts, and promotes the solution to baseline when it's fast enough and outputs are still bit-exact.
@@ -55,7 +62,7 @@ Both baseline and solution images expose the same HTTP API on `:8000`:
 ```
 any token mismatch             → 0
 agent_time ≥ baseline_time     → 0
-else                           → baseline_time / agent_time
+else                           → 1
 ```
 
 Promotion gate: `score ≥ 1.05` and all outputs match → solution image is retagged as the new baseline and re-measured. Persisted in `judge/baseline.json`.
