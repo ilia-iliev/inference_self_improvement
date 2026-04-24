@@ -58,10 +58,10 @@ def build_user_message() -> str:
         preloaded.append(last)
 
     # Previous run notes — agent's own record of what was tried
-    notes = WORKSPACE / "solution" / "NOTES.md"
+    notes = WORKSPACE / "solution" / "notes.md"
     if notes.exists():
         parts.append("# Previous run notes (your own log of what was tried)")
-        parts += _read_file_block(notes, "NOTES.md")
+        parts += _read_file_block(notes, "notes.md")
         preloaded.append(notes)
 
     # Baseline — model always wants to read this; inline it
@@ -98,7 +98,9 @@ def build_user_message() -> str:
         "# Instructions",
         "The solution files above are your current working state — read them again with read()"
         " if you need to verify before editing.",
-        "Make ONE meaningful edit to /workspace/solution/, then call submit().",
+        "Run the loop: write a hypothesis to notes.md, edit /workspace/solution/,"
+        " then `python3 /workspace/start_inference.py` and `python3 /workspace/evaluate.py`."
+        " Call submit() only if wall time improved ≥5% and tokens match.",
     ]
 
     return "\n".join(parts)

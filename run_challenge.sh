@@ -72,20 +72,35 @@ agent_build() {
 agent_docker_run() {
     # $1 = extra docker-run flags (e.g. -it), $@[2..] = command
     local extra_flags="$1"; shift
+    local model_mount_root="${MODEL_MOUNT_ROOT:-/mnt/hdd2}"
+    local docker_gid
+    docker_gid="$(getent group docker | cut -d: -f3)"
     # shellcheck disable=SC2086  # extra_flags is intentionally word-split
     docker run --rm $extra_flags \
         --network host \
         --gpus "\"device=${AGENT_RUN_GPU}\"" \
         --user "$(id -u):$(id -g)" \
+        --group-add "${docker_gid:-0}" \
         -v "$SCRIPT_DIR/solution":/workspace/solution \
         -v "$SCRIPT_DIR/data/agent":/workspace/data/agent:ro \
         -v "$SCRIPT_DIR/judge":/workspace/judge:ro \
         -v "$SCRIPT_DIR/PROMPT.md":/workspace/PROMPT.md:ro \
+        -v "$model_mount_root":"$model_mount_root":ro \
+        -v /var/run/docker.sock:/var/run/docker.sock \
         -e MODEL_PATH="$MODEL_PATH" \
+        -e MODEL_MOUNT_ROOT="$model_mount_root" \
+        -e HOST_DATA_DIR="$SCRIPT_DIR/data" \
+        -e SUBMIT_GPU="${SUBMIT_GPU:-1}" \
         -e HF_HUB_OFFLINE=1 \
         -e AGENT_LLM_URL="$AGENT_LLM_URL" \
         -e AGENT_LLM_MODEL="$AGENT_LLM_MODEL" \
         gemma4-agent:latest "$@"
+}
+
+# Stop+remove the solution dev container that start_inference.py leaves
+# running. Safe to call unconditionally; no-op if it isn't there.
+cleanup_solution_dev() {
+    docker rm -f gemma4-solution-dev >/dev/null 2>&1 || true
 }
 
 case "${1:-}" in
@@ -103,7 +118,8 @@ case "${1:-}" in
     agent-run)      preflight "$ENV_FILE"
                     agent_build
                     agent_docker_run "" python3 /workspace/agent/runner.py \
-                        2>&1 | tee "$SCRIPT_DIR/solution/agent_run.log" ;;
+                        2>&1 | tee "$SCRIPT_DIR/solution/agent_run.log"
+                    cleanup_solution_dev ;;
     loop)           preflight "$ENV_FILE"
                     iters="${2:-5}"
                     _snap="$SCRIPT_DIR/solution/.loop-snapshot"
@@ -112,20 +128,21 @@ case "${1:-}" in
 
                         # Snapshot code files before agent runs so a failed/diverged
                         # run can be rolled back. Excludes dot-files, last_result.json,
-                        # agent_run.log, and NOTES.md (notes accumulate across runs).
+                        # agent_run.log, and notes.md (notes accumulate across runs).
                         rm -rf "$_snap"
                         mkdir -p "$_snap"
                         find "$SCRIPT_DIR/solution" -maxdepth 1 -type f \
                             ! -name ".*" \
                             ! -name "last_result.json" \
                             ! -name "agent_run.log" \
-                            ! -name "NOTES.md" \
+                            ! -name "notes.md" \
                             -exec cp {} "$_snap/" \;
 
                         agent_build
                         agent_docker_run "" python3 /workspace/agent/runner.py \
                             2>&1 | tee "$SCRIPT_DIR/solution/agent_run.log" \
                             || echo "agent-run failed (iter $i), continuing"
+                        cleanup_solution_dev
                         marker="$SCRIPT_DIR/solution/.submit-request"
                         if [ ! -f "$marker" ]; then
                             echo "no submit marker for iter $i — restoring pre-run snapshot"
@@ -135,7 +152,7 @@ case "${1:-}" in
                         rm -f "$marker"
                         uv run "${UV_DEPS[@]}" python3 "$SUBMIT_PY" \
                             || echo "submit reported non-zero (continuing)"
-                        # Append eval result to NOTES.md so the agent sees external outcomes.
+                        # Append eval result to notes.md so the agent sees external outcomes.
                         if [ -f "$SCRIPT_DIR/solution/last_result.json" ]; then
                             _note="[eval iter $i] $(python3 -c "
 import json, sys
@@ -147,7 +164,7 @@ elif r.get('promoted'):
 else:
     print(f'score={r.get(\"score\",0):.3f} agent={r.get(\"agent_time\",\"?\"):.1f}s baseline={r.get(\"baseline_time\",\"?\"):.1f}s mismatched={r.get(\"num_mismatched\",\"?\")}')
 ")"
-                            echo "$_note" >> "$SCRIPT_DIR/solution/NOTES.md"
+                            echo "$_note" >> "$SCRIPT_DIR/solution/notes.md"
                         fi
                         if python3 -c "import json,sys; sys.exit(0 if json.load(open('$SCRIPT_DIR/solution/last_result.json')).get('promoted') else 1)"; then
                             echo "solution promoted — stopping loop."
